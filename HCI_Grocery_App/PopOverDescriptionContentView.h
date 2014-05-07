@@ -8,5 +8,10 @@
 
 #import "PopOverContentView.h"
 
+@class GroceryItem;
+
 @interface PopOverDescriptionContentView : PopOverContentView
+
+- (id)initWithGroceryItem:(GroceryItem *) item;
+
 @end

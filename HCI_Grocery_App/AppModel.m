@@ -13,6 +13,7 @@
 @interface AppModel()
 {
     BOOL _loggedIn;
+    BOOL _idVerified;
     NSUserDefaults *_defaults;
     
     NSDictionary *_possibleItems;
@@ -24,6 +25,7 @@
 @implementation AppModel
 
 @synthesize loggedIn = _loggedIn;
+@synthesize idVerified = _idVerified;
 
 + (id)sharedAppModel
 {
@@ -43,38 +45,46 @@
         
         GroceryItem *apple = [[GroceryItem alloc] init];
         apple.name = @"Apple";
-        apple.imageName = @"apple.jpg";
+        apple.imageName = @"apple.png";
         apple.description = @"Healthy fruit";
         apple.price = 0.59f;
         
-        GroceryItem *appleCoupon = [[GroceryItem alloc] init];
-        appleCoupon.name = @"Apple - Buy 6, get 2 free";
-        appleCoupon.imageName = @"appleCoupon.jpg";
-        appleCoupon.description = @"Special Deal for Loyal Copps Customers!";
-        appleCoupon.price = 0.59f;
-        appleCoupon.count = -2.0f;
-        
-        apple.coupon = appleCoupon;
-        
         GroceryItem *bread = [[GroceryItem alloc] init];
-        apple.name = @"Loaf of Bread";
-        apple.imageName = @"bread.jpg";
-        apple.description = @"Healthy fruit";
-        apple.price = 2.78f;
+        bread.name = @"Sweet Bread";
+        bread.imageName = @"bread.png";
+        bread.description = @"King's Hawaiian Sweet Bread";
+        bread.price = 4.78f;
+        
+        GroceryItem *breadCoupon = [[GroceryItem alloc] init];
+        breadCoupon.isCoupon = YES;
+        breadCoupon.name = @"$2.00 Off Sweet Bread";
+        breadCoupon.imageName = @"breadCoupon.png";
+        breadCoupon.description = @"Special Deal for Loyal Copps Customers!";
+        breadCoupon.price = 2.00f;
+        breadCoupon.count = -1.0f;
+        breadCoupon.requiredItem = bread;
+        
+        bread.coupon = breadCoupon;
         
         GroceryItem *vodka = [[GroceryItem alloc] init];
-        apple.name = @"Smirnoff Vodka 1.75L";
-        apple.imageName = @"smirnoff.jpg";
-        apple.description = @"Healthy fruit";
-        apple.price = 17.99f;
+        vodka.name = @"Smirnoff Vodka 1.75L";
+        vodka.imageName = @"smirnoff.jpg";
+        vodka.description = @"Vodka";
+        vodka.price = 17.99f;
+        
+        GroceryItem *idCard = [[GroceryItem alloc] init];
+        idCard.name = @"ID";
+        idCard.imageName = @"error.jpg";
+        idCard.description = @"SHOULD NOT APPEAR";
+        idCard.price = -1.0f;
         
         GroceryItem *checkout = [[GroceryItem alloc] init];
-        apple.name = @"CHECKOUT";
-        apple.imageName = @"error.jpg";
-        apple.description = @"SHOULD NOT APPEAR";
-        apple.price = -1.0f;
+        checkout.name = @"CHECKOUT";
+        checkout.imageName = @"error.jpg";
+        checkout.description = @"SHOULD NOT APPEAR";
+        checkout.price = -1.0f;
         
-        _possibleItems = [NSMutableDictionary dictionaryWithObjectsAndKeys:apple, @"01234567895", appleCoupon, @"01267834595", bread, @"56789501234", vodka, @"01235678954", checkout, @"67012358954", nil];
+        _possibleItems = [NSMutableDictionary dictionaryWithObjectsAndKeys:apple, @"0036000291452", breadCoupon, @"9788679912077", bread, @"9771234567003", vodka, @"0824150401483", idCard, @"Jacob's ID", checkout, @"0671860013624", nil];
         
         _shoppingCart = [[NSMutableDictionary alloc] initWithCapacity:4];
 	}

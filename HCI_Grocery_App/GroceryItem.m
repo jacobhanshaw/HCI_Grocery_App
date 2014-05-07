@@ -10,6 +10,6 @@
 
 @implementation GroceryItem
 
-@synthesize name, price, imageName, description, count, coupon;
+@synthesize isCoupon, name, price, imageName, description, count, coupon, requiredItem;
 
 @end

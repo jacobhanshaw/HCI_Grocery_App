@@ -9,61 +9,64 @@
 #import "PopOverDescriptionContentView.h"
 
 #import "AppModel.h"
-#import "Game.h"
-#import "GateLevel.h"
-#import "DynamicTextViewCell.h"
-#import "TruthTableView.h"
-#import "BlackBoxCell.h"
+#import "GroceryItem.h"
 
 #define X_INSET 10
 #define Y_INSET 40
 
-#define TITLE_CELL_IDENTIFIER @"TitleCell"
-#define DESCRIPTION_CELL_IDENTIFIER @"DescriptCell"
-#define TRUTH_TABLE_CELL_IDENTIFIER @"TruthTableCell"
-#define GATE_DESCRIPTION_CELL_IDENTIFIER @"GateDescriptionCell"
+#define TEXT_COLOR [UIColor blackColor]
 
-#define TITLE_CELL_HEIGHT 44
-#define TRUTH_TABLE_ROW_HEIGHT 20
-#define TRUTH_TABLE_COL_WIDTH  50
+#define SPACING 5.0f
 
-typedef enum {
-    TitleSection,
-    DescriptionSection,
-    TruthTableSection,
-    GateDescriptionSection,
-    NumSections
-} SectionLabel;
+#define TITLE_HEIGHT 20.0f
+#define TITLE_DESC_SPACING 10.0f
 
-@interface PopOverDescriptionContentView() <UITableViewDataSource, UITableViewDelegate>
-{
-    UITableView *descriptionTable;
-    DynamicTextViewCell *descriptionCellPrototype;
-    
-    TruthTableView *truthTable;
-}
+#define IMAGE_SIZE 100.0f
+#define IMAGE_DESC_SPACE 10.0f
 
-@end
+#define DESC_HEIGHT 50.0f
+#define DESC_NEXT_HEIGHT 10.0f
+
+#define COUP_HEIGHT 100.0f
+#define COUP_NEXT_HEIGHT 0.0f
+
+#define CHECK_SIZE 50.0f
+
+#define COUNT_WIDTH 50.0f
+#define COUNT_HEIGHT 40.0f
+
+#define COUNT_BUTTON_WIDTH 50.0f
+
+#define COUNT_ADD_SPACING 30.0f
+
+#define ADD_HEIGHT 100.0f
 
 @implementation PopOverDescriptionContentView
+{
+    GroceryItem *_item;
+    BOOL couponUsed;
+    
+    UILabel *_titleLabel;
+    UIImageView *_imageView;
+    UITextView *_description;
+    UIButton *_couponButton;
+    UIImageView *_checkmark;
+    UILabel *_countLabel;
+    UIButton *_lessButton;
+    UIButton *_moreButton;
+    UIButton *_addButton;
+}
 
-- (id)init
+- (id)initWithGroceryItem:(GroceryItem *) item
 {
     self = [super init];
     if (self)
     {
-        descriptionTable = [[UITableView alloc] initWithFrame:CGRectMake(0, 0, 1, 1) style:UITableViewStylePlain];
-        descriptionTable.dataSource = self;
-        descriptionTable.delegate = self;
-        descriptionTable.bounces = NO;
-        [self addSubview:descriptionTable];
-        
-        truthTable = [[TruthTableView alloc] initWithFrame:CGRectMake(0, 0, 100, 100) inputs:((GateLevel *)[AppModel sharedAppModel].currentGame.currentLevel).initialInputs goalOutputs:((GateLevel *)[AppModel sharedAppModel].currentGame.currentLevel).goalResults andLabels:nil];
-        [truthTable setUpWithFrame: CGRectMake(0, 0, truthTable.numCols * TRUTH_TABLE_COL_WIDTH, truthTable.numRows * TRUTH_TABLE_ROW_HEIGHT)];
-        
-        [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
-        [[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(didRotate:) name: UIDeviceOrientationDidChangeNotification object: nil];
+        _item = item;
+        self.opaque = YES;
+        self.backgroundColor = [UIColor whiteColor];
     }
+    
     return self;
 }
 
@@ -71,186 +74,153 @@ typedef enum {
 {
     CGRect realFrame = CGRectInset(frame, X_INSET, Y_INSET);
     self.frame = realFrame;
-    descriptionTable.frame = CGRectMake(0, 0, realFrame.size.width, realFrame.size.height);
-}
-
-- (void) dealloc
-{
-    [[UIDevice currentDevice] endGeneratingDeviceOrientationNotifications];
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-}
-
--(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
-{
-    return NumSections;
-}
-
--(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
-{
-    switch (section)
-    {
-        case TitleSection:
-            return 1;
-        case DescriptionSection:
-            return 1;
-        case TruthTableSection:
-            return 1;
-        case GateDescriptionSection:
-            return [[((GateLevel *)[AppModel sharedAppModel].currentGame.currentLevel).boxes allKeys] count];
-        default:
-            return 1;
-    }
-}
-
--(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
-{
-    if(section == DescriptionSection)
-        return @"Goal";
-    else if(section == TruthTableSection)
-        return @"Truth Table";
-    else if (section == GateDescriptionSection)
-        return @"Components";
     
-    return nil;
-}
-
-
--(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    switch (indexPath.section)
-    {
-        case TitleSection:
-            return TITLE_CELL_HEIGHT;
-        case DescriptionSection:
-        {
-            if(!descriptionCellPrototype)
-            {
-                descriptionCellPrototype = [[DynamicTextViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier: GATE_DESCRIPTION_CELL_IDENTIFIER];
-                descriptionCellPrototype.textView.text = @"HA"; //Goofiness, but otherwise font property of textview is nil
-            }
-
-            CGSize newLabelFrameSize = [((GateLevel *)[AppModel sharedAppModel].currentGame.currentLevel).goalMessage sizeWithFont:descriptionCellPrototype.textView.font
-                                          constrainedToSize:CGSizeMake(descriptionCellPrototype.textView.frame.size.width, MAXFLOAT)
-                                              lineBreakMode:NSLineBreakByWordWrapping];
-            return newLabelFrameSize.height + 2 * DYNAMIC_TEXTVIEW_CELL_Y_MARGIN;
-        }
-        case TruthTableSection:
-            return TRUTH_TABLE_ROW_HEIGHT * truthTable.numRows;
-        case GateDescriptionSection:
-            return BLACKBOX_CELL_HEIGHT;
-        default:
-            return 44;
-    }
-}
-
--(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    switch (indexPath.section)
-    {
-        case TitleSection:
-        {
-            UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:TITLE_CELL_IDENTIFIER];
-            if(!cell)
-            {
-                cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:TITLE_CELL_IDENTIFIER];
-                cell.textLabel.textAlignment = UITextAlignmentCenter;
-                cell.textLabel.text = [NSString stringWithFormat:@"Level %d: %@", ((GateLevel *)[AppModel sharedAppModel].currentGame.currentLevel).levelNumber, ((GateLevel *)[AppModel sharedAppModel].currentGame.currentLevel).title];
-                [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
-            }
-            return cell;
-        }
-        case DescriptionSection:
-        {
-            DynamicTextViewCell *cell = [tableView dequeueReusableCellWithIdentifier:DESCRIPTION_CELL_IDENTIFIER];
-            if(!cell)
-            {
-                cell = [[DynamicTextViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:DESCRIPTION_CELL_IDENTIFIER];
-                cell.textView.text = ((GateLevel *)[AppModel sharedAppModel].currentGame.currentLevel).goalMessage;
-                [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
-            }
-            
-            return cell;
-        }
-        case TruthTableSection:
-        {
-            UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:TRUTH_TABLE_CELL_IDENTIFIER];
-            if(!cell)
-            {
-                cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:TRUTH_TABLE_CELL_IDENTIFIER];
-                UIScrollView *scrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(0, 0, cell.frame.size.width, cell.frame.size.height)];
-                scrollView.contentSize = truthTable.frame.size;
-                scrollView.autoresizingMask |= UIViewAutoresizingFlexibleWidth;
-                scrollView.autoresizingMask |= UIViewAutoresizingFlexibleHeight;
-                scrollView.bounces = NO;
-                [scrollView addSubview:truthTable];
-                [cell addSubview:scrollView];
-                
-                [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
-            }
-            
-            return cell;
-        }
-        case GateDescriptionSection:
-        {
-            BlackBoxCell *cell = [tableView dequeueReusableCellWithIdentifier:GATE_DESCRIPTION_CELL_IDENTIFIER];
-            if (cell == nil)
-            {
-                cell = [[BlackBoxCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:GATE_DESCRIPTION_CELL_IDENTIFIER];
-                [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
-            }
-            
-            return cell;
-        }
-        default:
-            return nil;
-    }
+    float height = SPACING;
     
-    return  nil;
-}
+    _titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(SPACING, height, realFrame.size.width - IMAGE_SIZE - 2 * SPACING, TITLE_HEIGHT)];
+    _titleLabel.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleBottomMargin);
+    [_titleLabel setText:_item.name];
+    [_titleLabel setTextColor:TEXT_COLOR];
+    
+    [self addSubview:_titleLabel];
+    
+    _imageView = [[UIImageView alloc] initWithFrame:CGRectMake(realFrame.size.width - IMAGE_SIZE - SPACING, height, IMAGE_SIZE, IMAGE_SIZE)];
+    _imageView.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleBottomMargin);
+    [_imageView setImage:[UIImage imageNamed:_item.imageName]];
+    _imageView.contentMode = UIViewContentModeScaleAspectFit;
+    
+    [self addSubview:_imageView];
+    
+    _description = [[UITextView alloc] initWithFrame:CGRectMake(SPACING, TITLE_HEIGHT + TITLE_DESC_SPACING, 100.0f, DESC_HEIGHT)];
+    _description.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleBottomMargin);
+    [_description setText: _item.description];
+    [_description setTextColor:TEXT_COLOR];
+    
+    [self addSubview:_description];
 
--(void) tableView:(UITableView *) tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    if(indexPath.section == GateDescriptionSection)
+    height += IMAGE_SIZE + IMAGE_DESC_SPACE;
+    
+    if(_item.coupon || _item.isCoupon)
     {
-        NSArray *boxTypes = [((GateLevel *)[AppModel sharedAppModel].currentGame.currentLevel) sortedTypes];
-        NSDictionary *boxes = ((GateLevel *)[AppModel sharedAppModel].currentGame.currentLevel).boxes;
+        _couponButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        _couponButton.frame = CGRectMake(SPACING, height, realFrame.size.width - 2 * SPACING, COUP_HEIGHT);
+        _couponButton.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight |  UIViewAutoresizingFlexibleBottomMargin);
+        if(_item.isCoupon)
+               [_couponButton setBackgroundImage:[UIImage imageNamed:_item.imageName] forState:UIControlStateNormal];
+        else
+                [_couponButton setBackgroundImage:[UIImage imageNamed:_item.coupon.imageName] forState:UIControlStateNormal];
+        [_couponButton addTarget:self action:@selector(couponToggle) forControlEvents:UIControlEventTouchUpInside];
         
-        BlackBox *currentBox = [[boxes objectForKey:[boxTypes objectAtIndex:indexPath.row]] objectAtIndex:0];
+        [self addSubview:_couponButton];
         
-        [((BlackBoxCell *)cell) updateWithBox:currentBox andImageOnRightSide:(indexPath.row % 2 == 1)];
+        _checkmark = [[UIImageView alloc] initWithFrame:CGRectMake(_couponButton.frame.size.width - CHECK_SIZE, 0, CHECK_SIZE, CHECK_SIZE)];
+        _checkmark.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleBottomMargin);
+        [_checkmark setImage:[UIImage imageNamed:@"checkMark.png"]];
+        
+        [_couponButton addSubview:_checkmark];
+        
+        couponUsed = [[AppModel sharedAppModel].shoppingCart objectForKey:_item.coupon.name] != nil;
+        _checkmark.hidden = !couponUsed;
+        
+        height += COUP_HEIGHT + COUP_NEXT_HEIGHT;
     }
-}
-
--(NSIndexPath *)tableView:(UITableView *)tableView willSelectRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    return indexPath;
-}
-
--(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
-{
+    
+    if(!_item.isCoupon)
+    {
+        float countSpacing = realFrame.size.width - COUNT_WIDTH - 2.0f* COUNT_BUTTON_WIDTH;
+        countSpacing /= 4.0f;
+        
+        _countLabel = [[UILabel alloc] initWithFrame:CGRectMake(2.0f * countSpacing + COUNT_BUTTON_WIDTH, height, COUNT_WIDTH, COUP_HEIGHT)];
+        _countLabel.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleTopMargin);
+        [_countLabel setTextAlignment:NSTextAlignmentCenter];
+        [_countLabel setText:[NSString stringWithFormat:@"%d", _item.count]];
+        [_countLabel setTextColor:TEXT_COLOR];
+        
+        [self addSubview:_countLabel];
+        
+        _lessButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        _lessButton.frame = CGRectMake(countSpacing, height, COUNT_BUTTON_WIDTH, COUP_HEIGHT);
+        _lessButton.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleTopMargin);
+        [_lessButton setTitle:@"-" forState:UIControlStateNormal];
+        [_lessButton addTarget:self action:@selector(countChange:) forControlEvents:UIControlEventTouchUpInside];
+        [_lessButton setTitleColor:[UIColor colorWithRed:0.0 green:122.0/255.0 blue:1.0 alpha:1.0] forState:UIControlStateNormal];
+        _lessButton.tag = -1;
+        
+        [self addSubview:_lessButton];
+        
+        _moreButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        _moreButton.frame = CGRectMake(_countLabel.frame.origin.x + _countLabel.frame.size.width + countSpacing, height, COUNT_BUTTON_WIDTH, COUP_HEIGHT);
+        _moreButton.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleTopMargin);
+        [_moreButton setTitle:@"+" forState:UIControlStateNormal];
+        [_moreButton addTarget:self action:@selector(countChange:) forControlEvents:UIControlEventTouchUpInside];
+        [_moreButton setTitleColor:[UIColor colorWithRed:0.0 green:122.0/255.0 blue:1.0 alpha:1.0] forState:UIControlStateNormal];
+        _moreButton.tag = 1;
+        
+        [self addSubview:_moreButton];
+        
+        height += COUNT_HEIGHT + COUNT_ADD_SPACING;
+    }
+    
+    
+    _addButton  = [UIButton buttonWithType:UIButtonTypeCustom];
+    _addButton.frame = CGRectMake(SPACING, height, realFrame.size.width - 2 * SPACING, ADD_HEIGHT);
+    _addButton.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleBottomMargin);
+    [_addButton setImage:[UIImage imageNamed:@"addToCart.png"] forState:UIControlStateNormal];
+    [_addButton addTarget:self action:@selector(addItem) forControlEvents:UIControlEventTouchUpInside];
+    [_addButton setTitleColor:[UIColor colorWithRed:0.0 green:122.0/255.0 blue:1.0 alpha:1.0] forState:UIControlStateNormal];
+    
+    [self addSubview:_addButton];
     
 }
 
-#pragma mark
-
-- (void)didRotate:(NSNotification *)notification
+- (void) couponToggle
 {
-    UIDeviceOrientation orientation = [[UIDevice currentDevice] orientation];
+    couponUsed = !couponUsed;
     
-    //Ignoring specific orientations
-    if (orientation == UIDeviceOrientationFaceUp || orientation == UIDeviceOrientationFaceDown || orientation == UIDeviceOrientationUnknown)
-        return;
+    _checkmark.hidden = !couponUsed;
+}
 
-    [descriptionTable reloadData];
+- (void) countChange:(UIButton *) button
+{
+    _item.count += button.tag;
+    [_countLabel setText:[NSString stringWithFormat:@"%d", _item.count]];
+}
+
+- (void) addItem
+{
+    if(_item.isCoupon)
+    {
+        if(couponUsed && [[AppModel sharedAppModel].shoppingCart objectForKey:_item.requiredItem.name] != nil)
+            [[AppModel sharedAppModel] addObjectToCart:_item];
+        else
+            [[AppModel sharedAppModel] removeObjectFromCart:_item];
+    }
+    else
+    {
+        if(_item.count > 0)
+            [[AppModel sharedAppModel] addObjectToCart:_item];
+        else
+            [[AppModel sharedAppModel] removeObjectFromCart:_item];
+        
+        if(_item.coupon)
+        {
+            if(couponUsed && _item.count > 0)
+                [[AppModel sharedAppModel] addObjectToCart:_item.coupon];
+            else
+                [[AppModel sharedAppModel] removeObjectFromCart:_item.coupon];
+        }
+    }
+    
+    [self.dismissDelegate dismiss];
 }
 
 /*
-// Only override drawRect: if you perform custom drawing.
-// An empty implementation adversely affects performance during animation.
-- (void)drawRect:(CGRect)rect
-{
-    // Drawing code
-}
-*/
+ // Only override drawRect: if you perform custom drawing.
+ // An empty implementation adversely affects performance during animation.
+ - (void)drawRect:(CGRect)rect
+ {
+ // Drawing code
+ }
+ */
 
 @end

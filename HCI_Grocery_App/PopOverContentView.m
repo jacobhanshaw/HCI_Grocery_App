@@ -20,6 +20,10 @@
     }
     return self;
 }
+- (void) setUpWithAvailableFrame:(CGRect) frame
+{
+    
+}
 
 /*
 // Only override drawRect: if you perform custom drawing.

@@ -15,5 +15,6 @@
 @interface ScannerViewController : UIViewController
 
 - (ScannerViewController *) initWithDelegate:(id<ScannerViewControllerDelegate>) delegate;
+- (void) disableQRCodes;
 
 @end

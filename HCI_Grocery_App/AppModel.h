@@ -13,6 +13,7 @@
 + (AppModel *)sharedAppModel;
 
 @property (nonatomic) BOOL loggedIn;
+@property (nonatomic) BOOL idVerified;
 
 - (GroceryItem *) itemForBarcode:(NSString *) barcode;
 - (NSDictionary *) shoppingCart;

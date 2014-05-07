@@ -9,6 +9,10 @@
 
 #import "ScannerViewController.h"
 
+#import <CoreMedia/CoreMedia.h>
+#import <CoreVideo/CoreVideo.h>
+#import <AVFoundation/AVFoundation.h>
+
 #import "Barcode.h"
 
 @interface ScannerViewController ()<UIAlertViewDelegate, AVCaptureMetadataOutputObjectsDelegate>
@@ -19,7 +23,6 @@
     id<ScannerViewControllerDelegate> _delegate;
     NSMutableArray *_allowedBarcodeTypes;
 
-    UIView *_previewView;
     AVCaptureSession *_captureSession;
     AVCaptureDevice *_videoDevice;
     AVCaptureDeviceInput *_videoInput;
@@ -31,8 +34,20 @@
 - (ScannerViewController *) initWithDelegate:(id<ScannerViewControllerDelegate>) delegate
 {
     if((self = [super init]))
+    {
         _delegate = delegate;
-    
+        _allowedBarcodeTypes = [NSMutableArray new];
+        [_allowedBarcodeTypes addObject:@"org.iso.QRCode"];
+        [_allowedBarcodeTypes addObject:@"org.iso.PDF417"];
+        [_allowedBarcodeTypes addObject:@"org.gs1.UPC-E"];
+        [_allowedBarcodeTypes addObject:@"org.iso.Aztec"];
+        [_allowedBarcodeTypes addObject:@"org.iso.Code39"];
+        [_allowedBarcodeTypes addObject:@"org.iso.Code39Mod43"];
+        [_allowedBarcodeTypes addObject:@"org.gs1.EAN-13"];
+        [_allowedBarcodeTypes addObject:@"org.gs1.EAN-8"];
+        [_allowedBarcodeTypes addObject:@"com.intermec.Code93"];
+        [_allowedBarcodeTypes addObject:@"org.iso.Code128"];
+    }
     return self;
 }
 
@@ -40,8 +55,9 @@
     [super viewDidLoad];
     
     [self setupCaptureSession];
-    _previewLayer.frame = _previewView.bounds;
-    [_previewView.layer addSublayer:_previewLayer];
+    _previewLayer.bounds = CGRectMake(0, 0, self.view.frame.size.height, self.view.frame.size.width);
+    _previewLayer.position = CGPointMake(self.view.frame.size.width/2., self.view.frame.size.height/2.);
+    [self.view.layer addSublayer:_previewLayer];
     
     [[NSNotificationCenter defaultCenter]
      addObserver:self
@@ -53,18 +69,11 @@
      selector:@selector(applicationDidEnterBackground:)
      name:UIApplicationDidEnterBackgroundNotification
      object:nil];
-    
-    _allowedBarcodeTypes = [NSMutableArray new];
-    [_allowedBarcodeTypes addObject:@"org.iso.QRCode"];
-    [_allowedBarcodeTypes addObject:@"org.iso.PDF417"];
-    [_allowedBarcodeTypes addObject:@"org.gs1.UPC-E"];
-    [_allowedBarcodeTypes addObject:@"org.iso.Aztec"];
-    [_allowedBarcodeTypes addObject:@"org.iso.Code39"];
-    [_allowedBarcodeTypes addObject:@"org.iso.Code39Mod43"];
-    [_allowedBarcodeTypes addObject:@"org.gs1.EAN-13"];
-    [_allowedBarcodeTypes addObject:@"org.gs1.EAN-8"];
-    [_allowedBarcodeTypes addObject:@"com.intermec.Code93"];
-    [_allowedBarcodeTypes addObject:@"org.iso.Code128"];
+}
+
+- (void) disableQRCodes
+{
+    [_allowedBarcodeTypes removeObject:@"org.iso.QRCode"];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -113,7 +122,6 @@
                      initWithSession:_captureSession];
     _previewLayer.videoGravity =
     AVLayerVideoGravityResizeAspectFill;
-    
     
     _metadataOutput = [[AVCaptureMetadataOutput alloc] init];
     dispatch_queue_t metadataQueue =
@@ -187,7 +195,7 @@ didOutputMetadataObjects:(NSArray *)metadataObjects
             [self startRunning];
     }
     else
-        [self showBarcodeAlert:barcode];
+        [self dismissViewControllerAnimated:YES completion:nil];
 }
 - (void) showBarcodeAlert:(Barcode *)barcode
 {
@@ -209,12 +217,11 @@ didOutputMetadataObjects:(NSArray *)metadataObjects
 }
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex{
     if(buttonIndex == 0){
-        //Code for Done button
-        // TODO: Create a finished view
+        [self dismissViewControllerAnimated:YES completion:nil];
     }
     if(buttonIndex == 1){
         //Code for Scan more button
-        [self startRunning];
+     //   [self startRunning];
     }
 }
 
